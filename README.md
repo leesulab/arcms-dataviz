@@ -15,3 +15,15 @@ Parquet](https://parquet.apache.org/) format and created with the
 Data is not fully loaded in RAM but chromatograms and MS spectra are
 quickly retrieved from the parquet file with the [Apache Arrow
 library](https://arrow.apache.org/).
+
+<figure>
+<img src="2Dplot.png" alt="2D plot example" />
+<figcaption aria-hidden="true">2D plot example</figcaption>
+</figure>
+
+<figure>
+<img src="TIC-MSspectrum.png"
+alt="Total Ion Chromatogram (TIC) and MS spectrum" />
+<figcaption aria-hidden="true">Total Ion Chromatogram (TIC) and MS
+spectrum</figcaption>
+</figure>
