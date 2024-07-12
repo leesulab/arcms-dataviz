@@ -140,7 +140,6 @@ plotly_chrom <- function(data, type, session) {
  y = ~sum_int
 ) %>% hide_legend()
   return(p)
-
 }
 
 plotly_imstrace <- function(data, type, session) {

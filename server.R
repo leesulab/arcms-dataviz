@@ -368,12 +368,19 @@ BPI = as.data.table(BPI)
 return(BPI)
 })
 
-observeEvent(EIC(), {
-  EIC = EIC()
-  output$EICplot <- renderPlotly({
-    plotly_chrom(EIC, "EIC", session)
+EICPlotlyObj <- reactive({
+    req(EIC())
+    EIC = EIC()
+      plotly_chrom(EIC, "EIC", session)
   })
+
+output$EICplot <- renderPlotly({
+  EICPlotlyObj()
+  EIC = EIC()
+  plotly_chrom(EIC, "EIC", session)
 })
+
+downloadSvgPlot("EICPlot", EICPlotlyObj)
 
 observeEvent(EIC(), {
   EIC = EIC()
@@ -394,12 +401,28 @@ observeEvent(TIC(), {
   })
 })
 
+TICPlotlyObj <- reactive({
+    req(TIC())
+    TIC = TIC()
+      plotly_chrom(TIC, "TIC", session)
+  })
+
+downloadSvgPlot("TICPlot", TICPlotlyObj)
+
 observeEvent(BPI(), {
   BPI = BPI()
   output$BPIplot <- renderPlotly({
     plotly_chrom(BPI, "BPI", session)
   })
 })
+
+BPIPlotlyObj <- reactive({
+    req(BPI())
+    BPI = BPI()
+      plotly_chrom(BPI, "BPI", session)
+  })
+
+downloadSvgPlot("BPIPlot", BPIPlotlyObj)
 
 output$selection_text <- reactive({
    si <- input$tbsel_info
@@ -554,6 +577,7 @@ output$spectrumLowPlot <- renderPlotly({
   spectrumLowPlotObj()
 })
 
+downloadSvgPlot("spectrumLowPlot", spectrumLowPlotObj)
 
 
 spectrumHighPlotObj <- reactive({
@@ -589,6 +613,8 @@ spectrumHighPlotObj <- reactive({
 output$spectrumHighPlot <- renderPlotly({
   spectrumHighPlotObj()
 })
+
+downloadSvgPlot("spectrumHighPlot", spectrumHighPlotObj)
 
 
 # 1D mobility plot
