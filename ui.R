@@ -57,12 +57,14 @@ ui <- dashboardPage(skin = "blue",
                          status = "primary",
                          # solidHeader = TRUE,
                          collapsible = TRUE,
-                         "Input file must be a parquet file from Unifi data containing 4 columns:", br(),
+                         "Input file must be a parquet file in long format containing at least the 5 following columns:", br(),
                          tags$ul(
                                              tags$li("An 'rt' column containing retention times"),
-                                             tags$li("A 'masses' column containing arrays of masses at each retention time"),
-                                             tags$li("An 'intensities' column containing arrays of intensities at each retention time"),
-                                             tags$li("A 'scan_size' column containing arrays of scan sizes at each retention time")
+                                             tags$li("A 'scanid' column attributing an ID value to each retention time for each MS level"),
+                                             tags$li("An 'mz' column containing m/z values"),
+                                             tags$li("An 'intensity' column containing intensity at each m/z value"),
+                                             tags$li("A 'bin' column containing ion mobility bin index values (or the value 1 if no IMS in the data)"),
+                                             tags$li("An 'mslevel' column containing MS level of the scan (either 1 or 2)")
                          ),
                                                                                                                                                                                                                                      "Choose either an external file or a demo file:",br(),
                                                                                                                                                                                                                                      selectInput("dataType", label = "Data type",

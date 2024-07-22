@@ -6,7 +6,7 @@
 # Define server logic
 
 server <- function(input, output, session) {
-  options(shiny.maxRequestSize=2000*1024^2)
+  options(shiny.maxRequestSize=5000*1024^2)
 
 
 # Loading file
@@ -273,7 +273,7 @@ downloadSvgPlot("rtmz3DPlot", rtmz3Dplot)
 # -------------------
 
 output$chromCode <- renderText({
-    if(input$energy_level_chrom == 1) {energy = "Low"} else {energy = "High"}
+    if(input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 
 
@@ -281,20 +281,20 @@ output$chromCode <- renderText({
       paste0(
       "data_arrow = arrow::open_dataset(inFile$datapath) \n\n",
       "TIC = data_arrow |>
-      filter(energy_level == ", energy, " ) |>
+      filter(mslevel == ", energy, " ) |>
       arrange(rt) |>
       group_by(rt, scanid) |>
-      summarise(sum_int = sum(intensities)) |>
+      summarise(sum_int = sum(intensity)) |>
       collect()"
       )
     } else if (input$chromtype == 2) {
       paste0(
         "data_arrow = arrow::open_dataset(inFile$datapath) \n\n",
         "BPI = data_arrow |>
-          filter(energy_level == ", energy, " ) |>
+          filter(mslevel == ", energy, " ) |>
           arrange(rt) |>
           group_by(rt, scanid) |>
-          summarise(sum_int = max(intensities)) |>
+          summarise(sum_int = max(intensity)) |>
           collect()"
         )
     } else {
@@ -305,11 +305,11 @@ output$chromCode <- renderText({
         highmz = input$EICmz + input$EICtol
 
         EIC = data_arrow |>
-          filter(energy_level == ", energy, " ) |>
+          filter(mslevel == ", energy, " ) |>
           arrange(rt) |>
           filter(mz > lowmz & mz < highmz) |>
           group_by(rt, scanid) |>
-          summarise(sum_int = sum(intensities)) |>
+          summarise(sum_int = sum(intensity)) |>
           collect()"
       )
     }
@@ -319,17 +319,17 @@ output$chromCode <- renderText({
 EIC <- eventReactive(input$EICcalc, {
 req(f0())
 data_arrow = f0()
-if (input$energy_level_chrom == 1) {energy = "Low"} else {energy = "High"}
+if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 lowmz = input$EICmz - input$EICtol
 highmz = input$EICmz + input$EICtol
 
 EIC = data_arrow |>
-  filter(energy_level == energy) |>
+  filter(mslevel == energy) |>
   arrange(rt) |>
   filter(mz > lowmz & mz < highmz) |>
   group_by(rt, scanid) |>
-  summarise(sum_int = sum(intensities)) |>
+  summarise(sum_int = sum(intensity)) |>
   collect()
 
 EIC = as.data.table(EIC)
@@ -339,13 +339,13 @@ return(EIC)
 TIC <- eventReactive(input$TICcalc, {
 req(f0())
 data_arrow = f0()
-if (input$energy_level_chrom == 1) {energy = "Low"} else {energy = "High"}
+if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 TIC = data_arrow |>
-  filter(energy_level == energy) |>
+  filter(mslevel == energy) |>
   arrange(rt) |>
   group_by(rt, scanid) |>
-  summarise(sum_int = sum(intensities)) |>
+  summarise(sum_int = sum(intensity)) |>
   collect()
 
 TIC = as.data.table(TIC)
@@ -355,13 +355,13 @@ return(TIC)
 BPI <- eventReactive(input$BPIcalc, {
 req(f0())
 data_arrow = f0()
-if (input$energy_level_chrom == 1) {energy = "Low"} else {energy = "High"}
+if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 BPI = data_arrow |>
-  filter(energy_level == energy) |>
+  filter(mslevel == energy) |>
   arrange(rt) |>
   group_by(rt, scanid) |>
-  summarise(sum_int = max(intensities)) |>
+  summarise(sum_int = max(intensity)) |>
   collect()
 
 BPI = as.data.table(BPI)
@@ -520,10 +520,10 @@ spectrumLowData <- reactive({
   # print(scanids)
   data_arrow = f0()
   MSlow = data_arrow |>
-  filter(energy_level == "Low") |>
+  filter(mslevel == "1") |>
   filter(scanid %in% !!scanids) |>
   group_by(mz, bin) |>
-  summarise(sum_int = sum(intensities)) |>
+  summarise(sum_int = sum(intensity)) |>
   collect()
  #reorder to plot correctly
   MSlow = MSlow[order(MSlow$mz),]
@@ -534,10 +534,10 @@ spectrumHighData <- reactive({
   scanids <- chromSelectedRt$scanids
   data_arrow = f0()
   MShigh = data_arrow |>
-  filter(energy_level == "High") |>
+  filter(mslevel == "2") |>
   filter(scanid %in% !!scanids) |>
   group_by(mz, bin) |>
-  summarise(sum_int = sum(intensities)) |>
+  summarise(sum_int = sum(intensity)) |>
   collect()
  #reorder to plot correctly
   MShigh = MShigh[order(MShigh$mz),]
@@ -624,7 +624,7 @@ mobility1Dplot <- reactive({
   req(chromSelectedRt$scanids)
   scanids <- chromSelectedRt$scanids
   data_arrow = f0()
-  if (input$energy_level_chrom == 1) {energy = "Low"} else {energy = "High"}
+  if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
   xmin = reactiveList$valX1
   xmax = reactiveList$valX2
@@ -633,10 +633,10 @@ mobility1Dplot <- reactive({
 
   IMStrace1D = data_arrow |>
     to_duckdb() |>
-    filter(energy_level == "Low") |>
+    filter(mslevel == energy) |>
     filter(scanid %in% !!scanids) |>
     group_by(bin) |>
-    summarise(sum_int = sum(intensities)) |>
+    summarise(sum_int = sum(intensity)) |>
     collect()
 
   IMStrace1D = IMStrace1D[order(IMStrace1D$bin),]
@@ -657,7 +657,7 @@ mobility2Dplot <- reactive({
   req(chromSelectedRt$scanids)
   scanids <- chromSelectedRt$scanids
   data_arrow = f0()
-  if (input$energy_level_chrom == 1) {energy = "Low"} else {energy = "High"}
+  if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
   mz = mzdata()
   bin = bindata()

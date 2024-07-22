@@ -1,8 +1,8 @@
-condensedata <- function(data_arrow, energy_level, xmin, xmax, ymin, ymax, xbin, ybin, selectedaxes) {
+condensedata <- function(data_arrow, mslevel, xmin, xmax, ymin, ymax, xbin, ybin, selectedaxes) {
   if (selectedaxes == 1) {xaxis <- "rt"; yaxis = "mz"}
   if (selectedaxes == 2) {xaxis <- "bin"; yaxis = "rt"}
   if (selectedaxes == 3) {xaxis <- "bin"; yaxis = "mz"}
-  if (energy_level == 1) {energy = "Low"} else {energy = "High"}
+  if (mslevel == 1) {mslevel = "1"} else {mslevel = "2"}
   xbinned = as.symbol(glue::glue('{xaxis}_binned'))
   ybinned = as.symbol(glue::glue('{yaxis}_binned'))
   xaxis = as.symbol(xaxis)
@@ -10,13 +10,13 @@ condensedata <- function(data_arrow, energy_level, xmin, xmax, ymin, ymax, xbin,
 
   binneddata = data_arrow |>
   to_duckdb() |>
-  filter(energy_level == energy) |>
+  filter(mslevel == !!mslevel) |>
   filter(xaxis > xmin & xaxis < xmax) |>
   filter(yaxis > ymin & yaxis < ymax) |>
     mutate("{xbinned}" := floor(xaxis/xbin)*xbin) |>
     mutate("{ybinned}" := floor(yaxis/ybin)*ybin) |>
     group_by(xbinned, ybinned) |>
-    summarise(sum_int_binned = sum(intensities)) |>
+    summarise(sum_int_binned = sum(intensity)) |>
     collect()
   # spread to get matrix
   binneddata = as.data.table(binneddata)
@@ -32,16 +32,16 @@ condensedata <- function(data_arrow, energy_level, xmin, xmax, ymin, ymax, xbin,
   return(spreaddt)
 }
 
-condensedataIMStrace <- function(data_arrow, energy_level, xmin, xmax, ymin, ymax, xbin, ybin, scanids) {
+condensedataIMStrace <- function(data_arrow, mslevel, xmin, xmax, ymin, ymax, xbin, ybin, scanids) {
 
   IMStrace = data_arrow |>
     to_duckdb() |>
-    filter(energy_level == !!energy_level) |>
+    filter(mslevel == !!mslevel) |>
     filter(scanid %in% !!scanids) |>
     filter(bin > xmin & bin < xmax) |>
     filter(mz > ymin & mz < ymax) |>
     group_by(bin, mz) |>
-    summarise(sum_int = sum(intensities)) |>
+    summarise(sum_int = sum(intensity)) |>
     mutate(mz_binned = floor(mz/ybin)*ybin) |>
     group_by(bin, mz_binned) |>
     summarise(sum_int_binned = sum(sum_int)) |>
