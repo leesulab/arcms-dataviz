@@ -17,10 +17,18 @@ f0 <- reactive(
    if (input$dataType == 1) {
      inFile <- input$file0
      if (is.null(inFile)) return(NULL)
-     datafile <- arrow::open_dataset(inFile$datapath)
+     if (input$loadingMethod == 1) {
+       datafile <- arrow::read_parquet(inFile$datapath)
+     } else {
+       datafile <- arrow::open_dataset(inFile$datapath)
+     }
    }
    else if (input$dataType == 2) {
-     datafile <- arrow::open_dataset("cal1-full-long.parquet")
+     if (input$loadingMethod == 1) {
+       datafile <- arrow::read_parquet("cal1-full-long.parquet")
+     } else {
+       datafile <- arrow::open_dataset("cal1-full-long.parquet")
+     }
    }
    return(datafile)
  }
@@ -30,6 +38,7 @@ rtdata <- reactive({
   if (!is.null(f0())) {
     data_arrow = f0()
     rtmin = data_arrow |>
+    to_duckdb() |>
     summarize(across(rt, ~ min(.))) |>
     collect()
     rtmax = data_arrow |>
@@ -43,6 +52,7 @@ mzdata <- reactive({
   if (!is.null(f0())) {
     data_arrow = f0()
     mzmin = data_arrow |>
+    to_duckdb() |>
     summarize(across(mz, ~ min(.))) |>
     collect()
     mzmax = data_arrow |>
@@ -56,6 +66,7 @@ bindata <- reactive({
   if (!is.null(f0())) {
     data_arrow = f0()
     binmin = data_arrow |>
+    to_duckdb() |>
     summarize(across(bin, ~ min(.))) |>
     collect()
     binmax = data_arrow |>
@@ -140,6 +151,17 @@ binneddata <- reactive({
 
 # 2D plot
 # --------
+
+observe({
+  if (!is.null(f0())) {
+    req(binneddata())
+    spreaddt = binneddata()
+    maxintensity = max(spreaddt[,-1])
+    updateSliderInput(session, "zscale",
+      max = maxintensity,
+      value = c(1000,maxintensity/1000))
+  }
+})
 
 full2Dplot <- reactive({
   req(binneddata())
@@ -325,11 +347,12 @@ lowmz = input$EICmz - input$EICtol
 highmz = input$EICmz + input$EICtol
 
 EIC = data_arrow |>
+  to_duckdb() |>
   filter(mslevel == energy) |>
-  arrange(rt) |>
   filter(mz > lowmz & mz < highmz) |>
   group_by(rt, scanid) |>
   summarise(sum_int = sum(intensity)) |>
+  arrange(rt) |>
   collect()
 
 EIC = as.data.table(EIC)
@@ -342,10 +365,11 @@ data_arrow = f0()
 if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 TIC = data_arrow |>
+  to_duckdb() |>
   filter(mslevel == energy) |>
-  arrange(rt) |>
   group_by(rt, scanid) |>
   summarise(sum_int = sum(intensity)) |>
+  arrange(rt) |>
   collect()
 
 TIC = as.data.table(TIC)
@@ -358,10 +382,11 @@ data_arrow = f0()
 if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 BPI = data_arrow |>
+  to_duckdb() |>
   filter(mslevel == energy) |>
-  arrange(rt) |>
   group_by(rt, scanid) |>
   summarise(sum_int = max(intensity)) |>
+  arrange(rt) |>
   collect()
 
 BPI = as.data.table(BPI)
@@ -520,6 +545,7 @@ spectrumLowData <- reactive({
   # print(scanids)
   data_arrow = f0()
   MSlow = data_arrow |>
+  to_duckdb() |>
   filter(mslevel == "1") |>
   filter(scanid %in% !!scanids) |>
   group_by(mz, bin) |>
@@ -534,6 +560,7 @@ spectrumHighData <- reactive({
   scanids <- chromSelectedRt$scanids
   data_arrow = f0()
   MShigh = data_arrow |>
+  to_duckdb() |>
   filter(mslevel == "2") |>
   filter(scanid %in% !!scanids) |>
   group_by(mz, bin) |>
@@ -554,12 +581,14 @@ spectrumLowPlotObj <- reactive({
       bins_array = as.vector(input$dt_bin_selection)
     }
     MSlow = MSlow |>
+    to_duckdb() |>
     filter(bin %in% bins_array) |>
     group_by(mz) |>
     summarise(sum_int = sum(sum_int)) |>
     collect()
   } else {
     MSlow = MSlow |>
+    to_duckdb() |>
     group_by(mz) |>
     summarise(sum_int = sum(sum_int)) |>
     collect()
@@ -591,12 +620,14 @@ spectrumHighPlotObj <- reactive({
       bins_array = as.vector(input$dt_bin_selection)
     }
     MShigh = MShigh |>
+    to_duckdb() |>
     filter(bin %in% bins_array) |>
     group_by(mz) |>
     summarise(sum_int = sum(sum_int)) |>
     collect()
   } else {
     MShigh = MShigh |>
+    to_duckdb() |>
     group_by(mz) |>
     summarise(sum_int = sum(sum_int)) |>
     collect()
