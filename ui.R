@@ -93,8 +93,16 @@ ui <- dashboardPage(skin = "blue",
                                         br(),
                                         "Bin (drift time) range:", textOutput("binrange", inline = T),
                                         br(),
-                                        "Data dimensions:", textOutput("rawdatadim", inline = T)
-                          )
+                                        "Data dimensions:", textOutput("rawdatadim", inline = T),
+                                        br()
+
+                    ),
+                    box(
+                                        width = 12,
+                                        p("For faster operations, data can be filtered to remove low intensities. This will load filtered data into RAM even if \"Keep on-disk\" method was selected."), 
+                                        numericInput("filterIntensity", label = "Remove all intensities lower than this value:", value = 500),
+                                        actionButton("startFilterIntensity", label = "Start filtration")
+                    )
 
                      )
                      ),

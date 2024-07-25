@@ -34,9 +34,31 @@ f0 <- reactive(
  }
 )
 
-rtdata <- reactive({
+activeData <- reactiveValues()
+
+observe({
   if (!is.null(f0())) {
-    data_arrow = f0()
+    activeData$data = f0()
+  }
+})
+
+observeEvent(input$startFilterIntensity, {
+  req(f0())
+  if (!is.null(f0())) {
+    data = f0()
+    dataf = data |>
+    # to_duckdb |> #gives error
+    arrange(intensity) |>
+    filter(intensity > input$filterIntensity) |>
+    arrange(rt) |>
+    collect()
+    activeData$data = dataf
+}
+})
+
+rtdata <- reactive({
+  if (!is.null(activeData$data)) {
+    data_arrow = activeData$data
     rtmin = data_arrow |>
     to_duckdb() |>
     summarize(across(rt, ~ min(.))) |>
@@ -49,8 +71,8 @@ rtdata <- reactive({
    }
 })
 mzdata <- reactive({
-  if (!is.null(f0())) {
-    data_arrow = f0()
+  if (!is.null(activeData$data)) {
+    data_arrow = activeData$data
     mzmin = data_arrow |>
     to_duckdb() |>
     summarize(across(mz, ~ min(.))) |>
@@ -63,8 +85,8 @@ mzdata <- reactive({
    }
 })
 bindata <- reactive({
-  if (!is.null(f0())) {
-    data_arrow = f0()
+  if (!is.null(activeData$data)) {
+    data_arrow = activeData$data
     binmin = data_arrow |>
     to_duckdb() |>
     summarize(across(bin, ~ min(.))) |>
@@ -102,8 +124,8 @@ output$binrange <- renderText({
   })
 
 output$rawdatadim <- renderText({
- if (!is.null(f0())) {
-  data = f0()
+ if (!is.null(activeData$data)) {
+  data = activeData$data
   dim(data)
 }
 })
@@ -137,7 +159,7 @@ observe({
 # bin data
 binneddata <- reactive({
   req(reactiveList)
-  data_arrow = f0()
+  data_arrow = activeData$data
   xmin = reactiveList$valX1
   xmax = reactiveList$valX2
   ymin = reactiveList$valY1
@@ -153,7 +175,7 @@ binneddata <- reactive({
 # --------
 
 observe({
-  if (!is.null(f0())) {
+  if (!is.null(activeData$data)) {
     req(binneddata())
     spreaddt = binneddata()
     maxintensity = max(spreaddt[,-1])
@@ -339,8 +361,8 @@ output$chromCode <- renderText({
 
 
 EIC <- eventReactive(input$EICcalc, {
-req(f0())
-data_arrow = f0()
+req(activeData$data)
+data_arrow = activeData$data
 if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 lowmz = input$EICmz - input$EICtol
@@ -360,8 +382,8 @@ return(EIC)
 })
 
 TIC <- eventReactive(input$TICcalc, {
-req(f0())
-data_arrow = f0()
+req(activeData$data)
+data_arrow = activeData$data
 if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 TIC = data_arrow |>
@@ -377,8 +399,8 @@ return(TIC)
 })
 
 BPI <- eventReactive(input$BPIcalc, {
-req(f0())
-data_arrow = f0()
+req(activeData$data)
+data_arrow = activeData$data
 if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
 BPI = data_arrow |>
@@ -543,7 +565,7 @@ spectrumLowData <- reactive({
   req(chromSelectedRt$scanids)
   scanids <- chromSelectedRt$scanids
   # print(scanids)
-  data_arrow = f0()
+  data_arrow = activeData$data
   MSlow = data_arrow |>
   to_duckdb() |>
   filter(mslevel == "1") |>
@@ -558,7 +580,7 @@ spectrumLowData <- reactive({
 spectrumHighData <- reactive({
   req(chromSelectedRt$scanids)
   scanids <- chromSelectedRt$scanids
-  data_arrow = f0()
+  data_arrow = activeData$data
   MShigh = data_arrow |>
   to_duckdb() |>
   filter(mslevel == "2") |>
@@ -654,7 +676,7 @@ downloadSvgPlot("spectrumHighPlot", spectrumHighPlotObj)
 mobility1Dplot <- reactive({
   req(chromSelectedRt$scanids)
   scanids <- chromSelectedRt$scanids
-  data_arrow = f0()
+  data_arrow = activeData$data
   if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
   xmin = reactiveList$valX1
@@ -687,7 +709,7 @@ downloadSvgPlot("mobility1DPlot", mobility1Dplot)
 mobility2Dplot <- reactive({
   req(chromSelectedRt$scanids)
   scanids <- chromSelectedRt$scanids
-  data_arrow = f0()
+  data_arrow = activeData$data
   if (input$energy_level_chrom == 1) {energy = "1"} else {energy = "2"}
 
   mz = mzdata()
