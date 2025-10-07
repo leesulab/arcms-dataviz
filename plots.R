@@ -154,7 +154,7 @@ plotly_imstrace <- function(data, type, session) {
    line = list(shape = 'spline', smoothing = 1),
    source = sourcetype
    ) %>% layout(
-    xaxis=list(title= "Retention Time (min)"
+    xaxis=list(title= "Drift time (bin)"
               ),
     yaxis = list(title="Intensity"
   )) %>% hide_legend()

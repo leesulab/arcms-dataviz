@@ -618,7 +618,7 @@ spectrumLowPlotObj <- reactive({
   #reorder to plot correctly
   MSlow = MSlow[order(MSlow$mz),]
 
-  plot_ly(data = MSlow, x = ~mz, y = ~sum_int, type="scatter", mode = "line") %>%
+  plot_ly(data = MSlow, x = ~mz, y = ~sum_int, type="bar") %>%
     layout(
            xaxis = list(title = "m/z"),
            yaxis = list(title = "Intensity"))
@@ -657,7 +657,7 @@ spectrumHighPlotObj <- reactive({
   #reorder to plot correctly
   MShigh = MShigh[order(MShigh$mz),]
 
-  plot_ly(data = MShigh, x = ~mz, y = ~sum_int, type="scatter", mode = "line") %>%
+  plot_ly(data = MShigh, x = ~mz, y = ~sum_int, type="bar") %>%
     layout(
            xaxis = list(title = "m/z"),
            yaxis = list(title = "Intensity"))
